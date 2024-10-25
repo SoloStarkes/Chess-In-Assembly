@@ -152,32 +152,6 @@ validate_move:
 # rest of code is a gpt example, but not final code, arguments still need to be determined to be put into the
 # temporary registers. Do not go solely off the gpt code, it works kinda but not well
  # Ensure the move is within board boundaries (rows and columns between 0 and 7)
-    blt $t0, 0, invalid    # Check if from_row < 0
-    bgt $t0, 7, invalid    # Check if from_row > 7
-    blt $t1, 0, invalid    # Check if from_col < 0
-    bgt $t1, 7, invalid    # Check if from_col > 7
-    blt $t2, 0, invalid    # Check if to_row < 0
-    bgt $t2, 7, invalid    # Check if to_row > 7
-    blt $t3, 0, invalid    # Check if to_col < 0
-    bgt $t3, 7, invalid    # Check if to_col > 7
-
-    # Calculate source and destination indices
-    sll $t4, $t0, 3        # Index for source (from_row * 8)
-    add $t4, $t4, $t1      # Add from_col to get source index
-    sll $t5, $t2, 3        # Index for destination (to_row * 8)
-    add $t5, $t5, $t3      # Add to_col to get destination index
-
-    # Load the piece at the source position
-    lw  $t6, board($t4)    # Load piece from source
-    beq $t6, 0, invalid    # If source is empty, invalid move
-
-    # Load the piece at the destination position
-    lw  $t7, board($t5)    # Load piece from destination
-    bne $t7, 0, invalid    # If destination is not empty, invalid move
-
-    # Valid move
-    li  $v0, 1             # Set return value to valid
-    jr  $ra                # Return
 
 
 
@@ -198,17 +172,27 @@ jr  $ra
 
 update_board: 
 # TODO Update the chess board for the next cycle, shown is an example hard code
-    sll $t4, $t0, 3         # Calculate source index (row * 8)
-    add $t4, $t4, $t1       # Add column to get source index
-    lw  $t5, board($t4)     # Load piece at source
-    
-    sll $t6, $t2, 3         # Calculate destination index (row * 8)
-    add $t6, $t6, $t3       # Add column to get destination index
-    sw  $t5, board($t6)     # Store piece at destination
-    
-    sw  $zero, board($t4)   # Clear source square (set to empty)
-    jr  $ra
+la $t0, board # load enitre 2d array into t0
 
+# Access needed piece 
+li $t1, 3 # adjust value accordingly for the row
+li $t2, 2 # adjust value accordingly for the column
+li $t3, 8 # needed for the number of columns
+
+# Calculate the offset in memory to locate row and column location
+mul $t4, $t1, $t3 # t4 = row * cnumber of cols
+add $t4, $t4, $t2 # t4 = row * cols + colunn 
+sll $t4, $t4, 2 # muktiply by word
+add $t5, $t0, $t4 # t5 = base + offset (address of chessboard[0][0])
+lw $t6, 0($t5) # Load value from chessboard[0][0] into $t6 (should load the value 2 for the white rook)
+
+li $v0, 1
+move $a0, $t6
+syscall
+
+
+
+jr  $ra
 
 
 
